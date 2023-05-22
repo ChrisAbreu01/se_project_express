@@ -62,7 +62,7 @@ const deleteItem = (req, res) => {
     .findOne({ _id: itemId })
     .then((item) => {
       if (!item) {
-        res.status(404).send({ message: "Item not found" });
+        res.status(NOTFOUND).send({ message: "Item not found" });
       } else {
         clothingItem
           .deleteOne({ _id: itemId })
@@ -71,17 +71,17 @@ const deleteItem = (req, res) => {
           })
           .catch((error) => {
             res
-              .status(500)
+              .status(DEFAULT)
               .send({ message: "An error has occurred on the server" });
           });
       }
     })
     .catch((error) => {
       if (error.name === "CastError") {
-        res.status(400).send({ message: "Invalid item ID" });
+        res.status(INVALID_DATA).send({ message: "Invalid item ID" });
       } else {
         res
-          .status(500)
+          .status(DEFAULT)
           .send({ message: "An error has occurred on the server" });
       }
     });
