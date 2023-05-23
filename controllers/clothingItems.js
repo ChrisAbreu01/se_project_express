@@ -36,7 +36,7 @@ const getItems = (req, res) => {
 };
 const updateItem = (req, res) => {
   const { itemId } = req.params;
-  const { url } = req.body;
+  const { imageUrl } = req.body;
 
   clothingItem
     .findByIdAndUpdate(itemId, { $set: { imageUrl } })
@@ -62,23 +62,23 @@ const deleteItem = (req, res) => {
     .findOne({ _id: itemId })
     .then((item) => {
       if (!item) {
-        res.status(NOTFOUND).send({ message: "Item not found" });
+        res.status(NOTFOUND.error).send({ message: "Item not found" });
       } else {
         clothingItem
           .deleteOne({ _id: itemId })
           .then(() => {
             res.status(200).send({ data: item });
           })
-          .catch((error) => {
+          .catch(() => {
             res
-              .status(DEFAULT)
-              .send({ message: "An error has occurred on the server" });
+              .status(DEFAULT.error)
+              .send({ message: "An error has occurred on the server " });
           });
       }
     })
     .catch((error) => {
       if (error.name === "CastError") {
-        res.status(INVALID_DATA).send({ message: "Invalid item ID" });
+        res.status(INVALID_DATA.error).send({ message: "Invalid item ID" });
       } else {
         res
           .status(DEFAULT)
