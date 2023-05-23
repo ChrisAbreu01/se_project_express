@@ -7,7 +7,6 @@ const createUser = (req, res) => {
   users
     .create({ name, avatar })
     .then((user) => {
-      console.log("this is the user" + user);
       res.send({ data: user });
     })
     .catch((error) => {
