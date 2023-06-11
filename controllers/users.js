@@ -1,5 +1,7 @@
 const users = require("../models/users");
 const { JWT_SECRET } = require("../utils/config");
+const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken');
 const { DEFAULT, INVALID_DATA, NOTFOUND } = require("../utils/errors");
 
 const createUser = (req, res) => {
@@ -21,7 +23,7 @@ const createUser = (req, res) => {
                     res.status(409).send({ message: "Email already exists in database" });
                 } else {
                     res
-                        .status(DEFAULT.error)
+                        .status(INVALID_DATA.error)
                         .send({ message: "An error has occurred on the server" });
                 }
             });
@@ -29,8 +31,7 @@ const createUser = (req, res) => {
 
 };
 const getUsers = (req, res) => {
-    users
-        .find({})
+    users.find()
         .then((user) => {
             res.status(200);
             res.send(user);
@@ -44,9 +45,7 @@ const getUsers = (req, res) => {
 const getUser = (req, res) => {
     const { userId } = req.params;
 
-    users
-        .findById(userId)
-        .then((item) => {
+    users.findById(userId).then((item) => {
             if (!item) {
                 res.status(NOTFOUND.error).send({ message: "User not found" });
             } else {
@@ -71,7 +70,7 @@ const login = (req, res) => {
             .status(INVALID_DATA.error)
             .send({ message: "You are not authorized" });
     }
-    return User.findUserByCredentials(email, password)
+    return user.findOne({ email }).select('+password')
         .then((user) => {
             res.send({
                 token: jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" }),
@@ -86,23 +85,21 @@ const login = (req, res) => {
         });
 };
 const getCurrentUser = (req, res) => {
-    User.findById(req.user._id)
+    user.findById(req.user._id)
         .orFail(() => {
-            res
-                .status(DEFAULT.error)
-                .send({ message: "An error has occured on the server" });
+            res.status(404).send({ message: "An error has occured on the server" });
         })
         .then((user) => res.status(200).send({ data: user }))
         .catch((err) => {
             res
-                .status(DEFAULT.error)
+                .status(404)
                 .send({ message: "An error has occured on the server" });
         });
 };
 
 const updateCurrentUser = (req, res) => {
     const { name, avatar } = req.body;
-    User.findByIdAndUpdate(
+    user.findByIdAndUpdate(
             req.user._id, { name, avatar }, { new: true, runValidators: true }
         )
         .orFail(() => {
@@ -123,6 +120,8 @@ const updateCurrentUser = (req, res) => {
 module.exports = {
     createUser,
     getUsers,
+    getCurrentUser,
+    updateCurrentUser,
     getUser,
     login,
 };
