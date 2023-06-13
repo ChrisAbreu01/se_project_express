@@ -3,10 +3,9 @@ const { INVALID_DATA, NOTFOUND, DEFAULT } = require("../utils/errors");
 
 const createItem = (req, res) => {
     const { name, weather, imageUrl } = req.body;
-    const owner = req.user._id;
 
     clothingItem
-        .create({ name, weather, imageUrl, owner })
+        .create({ name, weather, imageUrl, owner: req.user._id})
         .then((item) => {
             res.status(201).send(item);
         })
@@ -60,6 +59,7 @@ const deleteItem = (req, res) => {
     const { itemId } = req.params;
     clothingItem
         .findOne({ _id: itemId })
+        // eslint-disable-next-line consistent-return
         .then((item) => {
             if (!item) {
                 res.status(NOTFOUND.error).send({ message: "Item not found" });
@@ -68,7 +68,7 @@ const deleteItem = (req, res) => {
                     .status(DEFAULT.error)
                     .send({ message: "You are not authorized" });
             } else {
-                clothingItem
+               clothingItem
                     .deleteOne({ _id: itemId })
                     .then(() => {
                         res.status(200).send({ data: item });

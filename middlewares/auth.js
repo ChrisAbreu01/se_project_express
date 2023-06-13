@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../utils/config");
-const { INVALID_DATA } = require("../utils/errors");
+const { UNAUTHORIZED } = require("../utils/errors");
 
 module.exports = (req, res, next) => {
     try {
@@ -8,7 +8,7 @@ module.exports = (req, res, next) => {
 
         if (!authorization || !authorization.startsWith("Bearer ")) {
             res
-                .status(INVALID_DATA.error)
+                .status(UNAUTHORIZED.error)
                 .send({ message: "Authorization not granted" });
             return;
         }
@@ -20,7 +20,7 @@ module.exports = (req, res, next) => {
             payload = jwt.verify(token, JWT_SECRET);
         } catch (err) {
             res
-                .status(INVALID_DATA.error)
+                .status(UNAUTHORIZED.error)
                 .send({ message: "Authorization not granted" });
             return;
         }
@@ -28,7 +28,7 @@ module.exports = (req, res, next) => {
         next();
     } catch (err) {
         res
-            .status(INVALID_DATA.error)
+            .status(UNAUTHORIZED.error)
             .send({ message: "Authorization not granted" });
     }
 };
