@@ -15,7 +15,6 @@ const createUser = (req, res, next) => {
 
   users
     .findOne({ email })
-    // eslint-disable-next-line consistent-return
     .then((response) => {
       if (response) {
         next(
@@ -27,7 +26,6 @@ const createUser = (req, res, next) => {
         return bcrypt.hash(password, 10);
       }
     })
-    // eslint-disable-next-line consistent-return
     .then((hpassword) => {
       if (hpassword) {
         return users.create({
@@ -51,48 +49,11 @@ const createUser = (req, res, next) => {
           .status(INVALID_DATA.error)
           .send({ message: "Invalid data provided" });
       } else if (error.code === 11000) {
-        res.status(409).send({ message: "Email already exists in database" });
-      } else {
-        res
-          .status(INVALID_DATA.error)
-          .send({ message: "An error has occurred on the server" });
-      }
-      next(error);
-    });
-};
-
-const getUsers = (req, res) => {
-  users
-    .find()
-    .then((user) => {
-      res.status(200);
-      res.send(user);
-    })
-    .catch(() => {
-      res
-        .status(DEFAULT.error)
-        .send({ message: "An error has occured on the server" });
-    });
-};
-const getUser = (req, res) => {
-  const { userId } = req.params;
-
-  users
-    .findById(userId)
-    .then((item) => {
-      if (!item) {
-        res.status(NOTFOUND.error).send({ message: "User not found" });
-      } else {
-        res.status(200).send({ data: item });
-      }
-    })
-    .catch((error) => {
-      if (error.name === "CastError") {
-        res.status(INVALID_DATA.error).send({ message: "Invalid user ID" });
+        res.status(ALREADYEXISTSERROR).send({ message: "Email already exists in database" });
       } else {
         res
           .status(DEFAULT.error)
-          .send({ message: "An error has occured on the server" });
+          .send({ message: "An error has occurred on the server" });
       }
     });
 };
@@ -108,25 +69,38 @@ const login = (req, res) => {
     .findOne({ email })
     .select("+password")
     .then((user) => {
+     bcrypt.compare(password, user.password).then((passwordMatch) => {
+            if (!passwordMatch) {
+                return res
+                .status(UNAUTHORIZED.error)
+                .send({ message: "You are not authorized" });
+            }
       res.send({
         token: jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" }),
       });
     })
     .catch(() => {
       res
-        .status(401)
-        .send({ message: "You are not authorized123" });
+        .status(UNAUTHORIZED.error)
+        .send({ message: "You are not authorized" });
     });
-};
+});
+}
+
 const getCurrentUser = (req, res) => {
   users
     .findById(req.user._id)
-    .orFail(() => {
-      res.status(401).send({ message: "An error has occured on the server" });
-    })
-    .then((user) => res.status(200).send({ data: user }))
+    .then((user) =>{ 
+        if (!user) {
+            res
+            .status(NOTFOUND.error)
+            .send({ message: "User not found" });
+          }
+        res.status(200).send({ data: user })
+
+})
     .catch(() => {
-      res.status(401).send({ message: "An error has occured on the server" });
+      res.status(DEFAULT.error).send({ message: "An error has occured on the server" });
     });
 };
 
@@ -137,16 +111,20 @@ const updateCurrentUser = (req, res) => {
       req.user._id,
       { name, avatar },
       { new: true, runValidators: true }
-    )
-    .orFail(() => {
-      res
-        .status(DEFAULT.error)
-        .send({ message: "An error has occured on the server" });
-    })
-    .then((user) => {
+    ).then((user) => {
+        if (!user) {
+            res
+            .status(NOTFOUND.error)
+            .send({ message: "User not found" });
+          }
       res.status(200).send(user);
     })
-    .catch(() => {
+    .catch((error) => {
+        if (error.name === "ValidationError") {
+            res
+              .status(INVALID_DATA.error)
+              .send({ message: "Invalid data provided" });
+        }
       res
         .status(DEFAULT.error)
         .send({ message: "An error has occured on the server" });
@@ -155,9 +133,7 @@ const updateCurrentUser = (req, res) => {
 
 module.exports = {
   createUser,
-  getUsers,
   getCurrentUser,
   updateCurrentUser,
-  getUser,
   login,
 };

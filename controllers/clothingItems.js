@@ -24,7 +24,6 @@ const getItems = (req, res) => {
     clothingItem
         .find({})
         .then((items) => {
-            res.status(200);
             res.send(items);
         })
         .catch(() => {
