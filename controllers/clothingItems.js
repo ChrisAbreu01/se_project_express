@@ -1,5 +1,5 @@
 const clothingItem = require("../models/clothingItems");
-const { INVALID_DATA, NOTFOUND, DEFAULT } = require("../utils/errors");
+const { INVALID_DATA, NOTFOUND, DEFAULT, FORBIDDEN } = require("../utils/errors");
 
 const createItem = (req, res) => {
     const { name, weather, imageUrl } = req.body;
@@ -64,7 +64,7 @@ const deleteItem = (req, res) => {
                 res.status(NOTFOUND.error).send({ message: "Item not found" });
             } else if (String(item.owner) !== req.user._id) {
                 return res
-                    .status(DEFAULT.error)
+                    .status(FORBIDDEN.error)
                     .send({ message: "You are not authorized" });
             } else {
                clothingItem

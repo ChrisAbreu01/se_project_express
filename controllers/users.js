@@ -10,25 +10,22 @@ const {
   ALREADYEXISTSERROR,
 } = require("../utils/errors");
 
-const createUser = (req, res, next) => {
+const createUser = (req, res) => {
   const { name, email, password, avatar } = req.body;
 
   users
     .findOne({ email })
     .then((response) => {
       if (response) {
-        next(
-          res
-            .status(ALREADYEXISTSERROR.error)
-            .send({ message: "User already exist" })
-        );
-      } else {
-        return bcrypt.hash(password, 10);
+       return res
+          .status(ALREADYEXISTSERROR.error)
+          .send({ message: "User already exist" });
       }
+        return bcrypt.hash(password, 10);
     })
     .then((hpassword) => {
       if (hpassword) {
-        return users.create({
+          users.create({
           name,
           email,
           password: hpassword,
@@ -49,7 +46,9 @@ const createUser = (req, res, next) => {
           .status(INVALID_DATA.error)
           .send({ message: "Invalid data provided" });
       } else if (error.code === 11000) {
-        res.status(ALREADYEXISTSERROR).send({ message: "Email already exists in database" });
+        res
+          .status(ALREADYEXISTSERROR)
+          .send({ message: "Email already exists in database" });
       } else {
         res
           .status(DEFAULT.error)
@@ -69,38 +68,44 @@ const login = (req, res) => {
     .findOne({ email })
     .select("+password")
     .then((user) => {
-     bcrypt.compare(password, user.password).then((passwordMatch) => {
-            if (!passwordMatch) {
-                return res
-                .status(UNAUTHORIZED.error)
-                .send({ message: "You are not authorized" });
-            }
-      res.send({
-        token: jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" }),
-      });
-    })
-    .catch(() => {
-      res
-        .status(UNAUTHORIZED.error)
-        .send({ message: "You are not authorized" });
+      if (!user) {
+         res
+          .status(UNAUTHORIZED.error)
+          .send({ message: "You are not authorized" });
+      }
+      bcrypt
+        .compare(password, user.password)
+        .then((passwordMatch) => {
+          if (!passwordMatch) {
+             res
+              .status(UNAUTHORIZED.error)
+              .send({ message: "You are not authorized" });
+          }
+          res.send({
+            token: jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" }),
+          });
+        })
+        .catch(() => {
+          res
+            .status(UNAUTHORIZED.error)
+            .send({ message: "You are not authorized" });
+        });
     });
-});
-}
+};
 
 const getCurrentUser = (req, res) => {
   users
     .findById(req.user._id)
-    .then((user) =>{ 
-        if (!user) {
-            res
-            .status(NOTFOUND.error)
-            .send({ message: "User not found" });
-          }
-        res.status(200).send({ data: user })
-
-})
+    .then((user) => {
+      if (!user) {
+        res.status(NOTFOUND.error).send({ message: "User not found" });
+      }
+      res.status(200).send({ data: user });
+    })
     .catch(() => {
-      res.status(DEFAULT.error).send({ message: "An error has occured on the server" });
+      res
+        .status(DEFAULT.error)
+        .send({ message: "An error has occured on the server" });
     });
 };
 
@@ -111,20 +116,19 @@ const updateCurrentUser = (req, res) => {
       req.user._id,
       { name, avatar },
       { new: true, runValidators: true }
-    ).then((user) => {
-        if (!user) {
-            res
-            .status(NOTFOUND.error)
-            .send({ message: "User not found" });
-          }
+    )
+    .then((user) => {
+      if (!user) {
+        res.status(NOTFOUND.error).send({ message: "User not found" });
+      }
       res.status(200).send(user);
     })
     .catch((error) => {
-        if (error.name === "ValidationError") {
-            res
-              .status(INVALID_DATA.error)
-              .send({ message: "Invalid data provided" });
-        }
+      if (error.name === "ValidationError") {
+        res
+          .status(INVALID_DATA.error)
+          .send({ message: "Invalid data provided" });
+      }
       res
         .status(DEFAULT.error)
         .send({ message: "An error has occured on the server" });
