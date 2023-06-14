@@ -17,22 +17,20 @@ const createUser = (req, res) => {
     .findOne({ email })
     .then((response) => {
       if (response) {
-       return res
+        return res
           .status(ALREADYEXISTSERROR.error)
           .send({ message: "User already exist" });
       }
-        return bcrypt.hash(password, 10);
+      return bcrypt.hash(password, 10);
     })
-    .then((hpassword) => {
-      if (hpassword) {
-          users.create({
-          name,
-          email,
-          password: hpassword,
-          avatar,
-        });
-      }
-    })
+    .then((hpassword) =>
+      users.create({
+        name,
+        email,
+        password: hpassword,
+        avatar,
+      })
+    )
     .then((user) => {
       if (user) {
         const userObject = user.toObject();
@@ -69,7 +67,7 @@ const login = (req, res) => {
     .select("+password")
     .then((user) => {
       if (!user) {
-         res
+        res
           .status(UNAUTHORIZED.error)
           .send({ message: "You are not authorized" });
       }
@@ -77,7 +75,7 @@ const login = (req, res) => {
         .compare(password, user.password)
         .then((passwordMatch) => {
           if (!passwordMatch) {
-             res
+            res
               .status(UNAUTHORIZED.error)
               .send({ message: "You are not authorized" });
           }
