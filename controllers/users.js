@@ -17,9 +17,12 @@ const createUser = (req, res) => {
     .findOne({ email })
     .then((response) => {
       if (response) {
-        return res
-          .status(ALREADYEXISTSERROR.error)
-          .send({ message: "User already exist" });
+        // return res
+        //   .status(ALREADYEXISTSERROR.error)
+        //   .send({ message: "User already exist" });
+        const error = new Error("User already exist");
+        error.statusCode = ALREADYEXISTSERROR.error;
+        throw error;
       }
       return bcrypt.hash(password, 10);
     })
@@ -47,6 +50,8 @@ const createUser = (req, res) => {
         res
           .status(ALREADYEXISTSERROR)
           .send({ message: "Email already exists in database" });
+      } else if (error.statusCode) {
+        res.status(error.statusCode).send({ message: error.message });
       } else {
         res
           .status(DEFAULT.error)
@@ -71,7 +76,7 @@ const login = (req, res) => {
           .status(UNAUTHORIZED.error)
           .send({ message: "You are not authorized" });
       }
-      bcrypt
+      return bcrypt
         .compare(password, user.password)
         .then((passwordMatch) => {
           if (!passwordMatch) {
