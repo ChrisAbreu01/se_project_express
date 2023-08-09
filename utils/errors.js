@@ -24,12 +24,17 @@ const ALREADYEXISTSERROR = {
   status: "AlreadyExistsError",
   error: 409,
 };
+const OK = {
+  status: " ok",
+  code: 200,
+};
 
 module.exports = {
   INVALID_DATA,
   NOTFOUND,
   DEFAULT,
+  OK,
   UNAUTHORIZED,
   FORBIDDEN,
-  ALREADYEXISTSERROR
+  ALREADYEXISTSERROR,
 };
