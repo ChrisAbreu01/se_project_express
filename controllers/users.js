@@ -1,7 +1,8 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const users = require("../models/users");
-const { JWT_SECRET } = require("../utils/config");
+
+const { NODE_ENV, JWT_SECRET } = process.env;
 const { ALREADYEXISTSERROR, OK } = require("../utils/errors");
 const BadRequestError = require("../errorConstructors/BadRequestError");
 const ConflictError = require("../errorConstructors/conflictError");
@@ -66,7 +67,13 @@ const login = (req, res, next) => {
             next(new UnauthorizedError("You are not authorized"));
           }
           res.send({
-            token: jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: "7d" }),
+            token: jwt.sign(
+              { _id: user._id },
+              NODE_ENV === "production" ? JWT_SECRET : "dev-secret",
+              {
+                expiresIn: "7d",
+              }
+            ),
           });
         })
         .catch(() => {
