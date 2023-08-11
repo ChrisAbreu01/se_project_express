@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const users = require("../models/users");
 
 const { NODE_ENV, JWT_SECRET } = process.env;
-const { ALREADYEXISTSERROR, OK } = require("../utils/errors");
+const { OK } = require("../utils/errors");
 const BadRequestError = require("../errorConstructors/BadRequestError");
 const ConflictError = require("../errorConstructors/conflictError");
 const DefaultError = require("../errorConstructors/DefaultError");
@@ -13,16 +13,8 @@ const NotFoundError = require("../errorConstructors/NotFoundError");
 const createUser = (req, res, next) => {
   const { name, email, password, avatar } = req.body;
 
-  users
-    .findOne({ email })
-    .then((response) => {
-      if (response) {
-        const error = new Error("User already exist");
-        error.statusCode = ALREADYEXISTSERROR.error;
-        throw error;
-      }
-      return bcrypt.hash(password, 10);
-    })
+  return bcrypt
+    .hash(password, 10)
     .then((hpassword) =>
       users.create({
         name,
@@ -113,8 +105,9 @@ const updateCurrentUser = (req, res, next) => {
     .catch((error) => {
       if (error.name === "ValidationError") {
         next(new BadRequestError("Validation error"));
+      } else {
+        next(new DefaultError("An error has occurred on the server"));
       }
-      next(new DefaultError("An error has occurred on the server"));
     });
 };
 

@@ -36,17 +36,15 @@ const deleteItem = (req, res, next) => {
   const { itemId } = req.params;
   clothingItem
     .findOne({ _id: itemId })
-    // eslint-disable-next-line consistent-return
     .then((item) => {
       if (!item) {
         next(new NotFoundError("Clothing item cannot be found with this ID"));
         return null;
       }
       if (String(item.owner) !== req.user._id) {
-        next(
+        return next(
           new ForbiddenError("You do not have permission to delete this item.")
         );
-        return null;
       }
       return clothingItem
         .deleteOne({ _id: itemId })
